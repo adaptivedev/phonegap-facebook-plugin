@@ -608,3 +608,4 @@ public class ConnectPlugin extends CordovaPlugin {
 		}
 	}
 }
+
