@@ -12,6 +12,7 @@
 
 @interface FacebookConnectPlugin ()
 
+@property (strong, nonatomic) NSMutableDictionary *userRes;
 @property (strong, nonatomic) NSString *userid;
 @property (strong, nonatomic) NSString* loginCallbackId;
 @property (strong, nonatomic) NSString* dialogCallbackId;
@@ -73,16 +74,24 @@
             if (!error) {
                 // We have a valid session
                 
-                if (state == FBSessionStateOpen) {
+                if (state == FBSessionStateOpen || state == FBSessionStateOpenTokenExtended) {
                     // Get the user's info
                     [FBRequestConnection startForMeWithCompletionHandler:
                      ^(FBRequestConnection *connection, id <FBGraphUser>user, NSError *error) {
                          if (!error) {
                              self.userid = [user objectForKey:@"id"];
-                             
+                             // GAB: add info right now, why wait for graph call that, anyhow, /me? doesn't work well in plugin
+                             _userRes = [[NSMutableDictionary alloc] init];
+                             [_userRes setObject:user[@"id"] forKey:@"id"];
+                             [_userRes setObject:user[@"first_name"] forKey:@"first_name"];
+                             [_userRes setObject:user[@"last_name"] forKey:@"last_name"];
+                             if([_userRes objectForKey:@"email"]) {
+                                 [_userRes setObject:user[@"email"] forKey:@"email"];
+                             }
                              // Send the plugin result. Wait for a successful fetch of user info.
                              if (self.loginCallbackId) {
                                 CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                                           //messageAsDictionary:userRes];
                                                                            messageAsDictionary:[self responseObject]];
                                 [self.commandDelegate sendPluginResult:pluginResult callbackId:self.loginCallbackId];
                              }
@@ -278,7 +287,7 @@
             } else {
                 readPermissionFound = YES;
             }
-            
+                
             // If we've found one of each we can stop looking.
             if (publishPermissionFound && readPermissionFound) {
                 break;
@@ -503,7 +512,7 @@
 
 - (NSDictionary *)responseObject {
     NSString *status = @"unknown";
-    NSDictionary *sessionDict = nil;
+    NSMutableDictionary *sessionDict = nil;
     
     NSTimeInterval expiresTimeInterval = [FBSession.activeSession.accessTokenData.expirationDate timeIntervalSinceNow];
     NSString *expiresIn = @"0";
@@ -515,6 +524,12 @@
         
         status = @"connected";
         sessionDict = @{
+                        // GAB: add user info from state change
+                        // avoid relying on additional, unnecessary, buggy call to /me?
+                        @"id" : [_userRes objectForKey:@"id"],
+                        //@"email" : [_userRes objectForKey:@"email"],
+                        @"first_name" : [_userRes objectForKey:@"first_name"],
+                        @"last_name" : [_userRes objectForKey:@"last_name"],
                         @"accessToken" : FBSession.activeSession.accessTokenData.accessToken,
                         @"expiresIn" : expiresIn,
                         @"secret" : @"...",
@@ -522,6 +537,11 @@
                         @"sig" : @"...",
                         @"userID" : self.userid
                         };
+
+        if([_userRes objectForKey:@"email"]) {
+            [sessionDict setObject:_userRes[@"email"] forKey:@"email"];
+        }
+
     }
     
     NSMutableDictionary *statusDict = [NSMutableDictionary dictionaryWithObject:status forKey:@"status"];
