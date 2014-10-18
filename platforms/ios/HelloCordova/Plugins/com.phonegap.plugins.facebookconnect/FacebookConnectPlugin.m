@@ -441,6 +441,10 @@
     
     NSString *graphPath = [command argumentAtIndex:0];
     NSArray *permissionsNeeded = [command argumentAtIndex:1];
+    
+    //GAB: don't bother checking permissions, already have
+    [self makeGraphCall:graphPath];
+    return;
 
     [FBRequestConnection
      startWithGraphPath: @"/me/permissions"
