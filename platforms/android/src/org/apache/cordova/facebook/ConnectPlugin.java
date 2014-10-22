@@ -38,7 +38,7 @@ import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.WebDialog;
 import com.facebook.widget.WebDialog.OnCompleteListener;
-import com.adaptivedev.utility.*;
+//import com.adaptivedev.utility.*;
 
 public class ConnectPlugin extends CordovaPlugin {
 
@@ -574,20 +574,26 @@ public class ConnectPlugin extends CordovaPlugin {
         Date today = new Date();
         long expiresTimeInterval = (session.getExpirationDate().getTime() - today.getTime()) / 1000L;
         long expiresIn = (expiresTimeInterval > 0) ? expiresTimeInterval : 0;
-        response = "{"+
-            "\"status\": \"connected\","+
-            "\"authResponse\": {"+
-              "\"id\": \""+Jw.getString(m_jsonGetUserInfo, "id")+"\","+
-              "\"email\": \""+Jw.getString(m_jsonGetUserInfo, "email")+"\","+
-              "\"first_name\": \""+Jw.getString(m_jsonGetUserInfo, "first_name")+"\","+
-              "\"last_name\": \""+Jw.getString(m_jsonGetUserInfo, "last_name")+"\","+
-              "\"accessToken\": \""+session.getAccessToken()+"\","+
-              "\"expiresIn\": \""+expiresIn+"\","+
-              "\"session_key\": true,"+
-              "\"sig\": \"...\","+
-              "\"userID\": \""+this.userID+"\""+
-            "}"+
-          "}";
+
+        response="";
+        try{          
+          response = "{"+
+              "\"status\": \"connected\","+
+              "\"authResponse\": {"+
+                "\"id\": \""+m_jsonGetUserInfo.getString("id")+"\","+
+                "\"email\": \""+m_jsonGetUserInfo.getString("email")+"\","+
+                "\"first_name\": \""+m_jsonGetUserInfo.getString("first_name")+"\","+
+                "\"last_name\": \""+m_jsonGetUserInfo.getString("last_name")+"\","+
+                "\"accessToken\": \""+session.getAccessToken()+"\","+
+                "\"expiresIn\": \""+expiresIn+"\","+
+                "\"session_key\": true,"+
+                "\"sig\": \"...\","+
+                "\"userID\": \""+this.userID+"\""+
+              "}"+
+            "}";
+          } catch (JSONException e) {
+            e.printStackTrace();            
+          }
       } else {
         response = "{"+
             "\"status\": \"unknown\""+
@@ -624,3 +630,4 @@ public class ConnectPlugin extends CordovaPlugin {
     }
   }
 }
+
